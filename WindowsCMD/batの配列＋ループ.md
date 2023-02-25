@@ -57,14 +57,14 @@ REM ----------------------------------------------------------------------------
 REM ■変数定義
 REM ----------------------------------------------------------------------------
 
-rem -----バッチファイル実行日取得-----
+REM -----バッチファイル実行日取得-----
 set filedate=%DATE:~-8,2%%DATE:~-5,2%%DATE:~-2%
 
-rem ------ログ出力-----
+REM ------ログ出力-----
 set BATCHNAME=filecopy
 set BATCHLOG=C:\work\log\filecopy_%filedate%.log
 
-rem ------ログローテート用変数-----
+REM ------ログローテート用変数-----
 set BATCHDIR=C:\work
 set BATCHLOGDIR=%BATCHDIR%\log
 set TMPDIR=%BATCHDIR%\tmp
