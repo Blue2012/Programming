@@ -38,4 +38,31 @@ GOTO END
 ラベル名1：
 処理内容
 ```
-総合すると
+総合すると以下のようなスクリプトになる。  
+ちなみにテキストの内容は以下の通り、forの既定のデリミタはオプションで指定しない限りは半角スペースかタブが指定されるとのこと。   
+「トークン」というのはいわば「カラム」のこと。各行の指定した列番号に位置するカラムデータを取得できる。
+
+```cmd
+C:\Program Files\work\before
+C:\Program Files\work\After
+```
+
+以下のように記載すること
+
+```cmd
+set listfile=C:\Work\script.txt
+
+:メイン処理
+for /f "tokens=1 delims= " %%A in (%listfile%) do (
+	set sourcepath=%%A
+	set destpath=%%B
+	
+	call :copy
+	call :rename
+)
+
+REM コピー処理
+:copy
+copy
+
+```
