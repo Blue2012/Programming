@@ -40,20 +40,62 @@ GOTO END
 ```
 総合すると以下のようなスクリプトになる。  
 ちなみにテキストの内容は以下の通り、forの既定のデリミタはオプションで指定しない限りは半角スペースかタブが指定されるとのこと。   
-「トークン」というのはいわば「カラム」のこと。各行の指定した列番号に位置するカラムデータを取得できる。
+「トークン」というのはいわば「カラム」のこと。各行の指定した列番号に位置するカラムデータを取得できる。   
+以下の例で言えば、各行のコピー元フォルダパス、コピー先フォルダパスを取得して、それぞれ、AとBの変数に格納する。   
 
 ```cmd
-C:\Program Files\work\before
-C:\Program Files\work\After
+C:\Program Files\work\before1 C:\Program Files\work\After1
+C:\Program Files\work\before2 C:\Program Files\work\After2
 ```
 
-以下のように記載すること
+以下のように記載することでテキストファイルから取得した変数データを1セットにコピー処理とリネーム処理を一気通貫で流しつつ、   
+指定した変数の数の分だけループ処理を回すという画期的な実装を実現できる。
 
 ```cmd
+
+REM ----------------------------------------------------------------------------
+REM ■変数定義
+REM ----------------------------------------------------------------------------
+
+rem -----バッチファイル実行日取得-----
+set filedate=%DATE:~-8,2%%DATE:~-5,2%%DATE:~-2%
+
+rem ------ログ出力-----
+set BATCHNAME=filecopy
+set BATCHLOG=C:\work\log\filecopy_%filedate%.log
+
+rem ------ログローテート用変数-----
+set BATCHDIR=C:\work
+set BATCHLOGDIR=%BATCHDIR%\log
+set TMPDIR=%BATCHDIR%\tmp
+
+REM ------リストファイル-----
+set listfile=C:\work\conf\filecopy.list
+
+REM ------返り値の初期化-----
+set RETURNCODE=0
+
+CALL :LOGGING Info: "▼ファイルコピープログラム開始"
+
+REM ----------------------------------------------------------------------------
+REM ■リストファイルの存在確認
+REM ----------------------------------------------------------------------------
+
 set listfile=C:\Work\script.txt
 
-:メイン処理
-for /f "tokens=1 delims= " %%A in (%listfile%) do (
+IF NOT EXIST %listfile% (
+	CALL :LOGGING Error: "ListFile（%listfile%）が見つかりませんでした。returncode=8"
+	SET RETURNCODE=8
+	GOTO END
+) ELSE (
+	CALL :LOGGING Info: " ListFile（%listfile%）を確認しました。returncode=0"
+)
+
+REM ----------------------------------------------------------------------------
+REM ■メイン処理
+REM ----------------------------------------------------------------------------
+
+for /f "tokens=1-2 delims= " %%A in (%listfile%) do (
 	set sourcepath=%%A
 	set destpath=%%B
 	
@@ -61,8 +103,40 @@ for /f "tokens=1 delims= " %%A in (%listfile%) do (
 	call :rename
 )
 
-REM コピー処理
+REM -----------------------------------------------------------------------------
+REM ■コピー処理
+REM -----------------------------------------------------------------------------
 :copy
-copy
+set sourcefilename=test1.txt
+set destfilename=newtest1.txt
+copy %sourcepath%%sourcefilename% %destpath%%destfilename%
+
+REM -----------------------------------------------------------------------------
+REM ■リネーム処理
+REM -----------------------------------------------------------------------------
+:rename
+set renamefile=renametest1.txt
+REN %destpath%%destfilename% %destpath%%renamefile%
+
+REM -----------------------------------------------------------------------------
+REM ■ログ出力ルーチン
+REM 第一引数：　エラーレベル（Info, Warn, Erro）
+REM 第二引数：　メッセージ
+REM -----------------------------------------------------------------------------
+:LOGGING
+ECHO %DATE:~-10% %TIME:~0,8% %BATCHNAME% %1 %~2 >> %BATCHLOG%
+ECHO %DATE:~-10% %TIME:~0,8% %BATCHNAME% %1 %~2 >&2
+EXIT /B !RETURNCODE!
+
+GOTO END
+
+REM -----------------------------------------------------------------------------
+REM ■処理終了
+REM -----------------------------------------------------------------------------
+:END
+REM 終了ログ出力
+CALL :LOGGING Info: "▲ファイルコピープログラム終了"
+
+exit
 
 ```
